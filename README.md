@@ -1,4 +1,5 @@
 # mqtt
 An MQTT client
 
-Pure Go.  No Blow.
+TODO
+Extend to accomodate compression.  Allow sending of files in addition to in memory messages.

@@ -11,7 +11,11 @@ import (
 
 const (
 	defaultConnectTimeout = time.Second * 30
+	mqttProtocolTag       = "MQTT"
 )
+
+// Size of the above protocol tag, cannot define a const array
+var mqttProtocolTagLength = [...]byte{0, 4}
 
 // MQTTListener is an interface defining
 // what a listener of MQTT communications
