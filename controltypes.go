@@ -19,3 +19,7 @@ const (
 	PingResponse
 	Disconnect
 )
+
+const (
+	connectMinimumLength = 10
+)

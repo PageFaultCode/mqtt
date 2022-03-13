@@ -9,6 +9,7 @@ const (
 	maxByteMultiplierCount  = 3
 	ctrlTypePosition        = 0
 	ctrlTypeShift           = 4
+	variableLengthPosition  = 1
 	ctrlFlagMask            = 0xF0
 	ctrlPacketMinimumLength = 2
 )
@@ -32,7 +33,7 @@ func (cp *ControlPacket) EncodePacket() ([]byte, error) {
 // DecodePacket decodes an incoming packet from the wire
 func DecodePacket(data []byte) (*ControlPacket, error) {
 	if len(data) <= ctrlPacketMinimumLength {
-		return nil, fmt.Errorf("invalid mqtt packet: +%v", data)
+		return nil, fmt.Errorf("invalid mqtt packet: %v", data)
 	}
 
 	// setup type and flags
@@ -43,12 +44,28 @@ func DecodePacket(data []byte) (*ControlPacket, error) {
 	}
 
 	// Length is byte 2 -> 5 depending on length
+	length, bytesConsumed := decodeLength(data[variableLengthPosition:])
 
+	if bytesConsumed == 0 {
+		return nil, fmt.Errorf("failed to decode length: %v", data[variableLengthPosition:4])
+	}
+
+	// length doesn't include of the packet length encoding itself
+	ctrlPacket.length = length
+
+	// will be the variable length size + the starting
+	// ctrl packet type/flags
+	bytesConsumed += variableLengthPosition
+
+	// This will be converted into individual functions
 	switch ctrlPacket.ctrlType {
 	case reserved:
 		return nil, fmt.Errorf("invalid control packet type: %v", data[ctrlTypePosition]>>ctrlTypeShift)
 	case Connect:
 		ctrlPacket.flags = 0
+		if ctrlPacket.length < connectMinimumLength {
+			return nil, fmt.Errorf("invalid connect packet length: %v", ctrlPacket.length)
+		}
 	case ConnectAck:
 		ctrlPacket.flags = 0
 	}
@@ -78,13 +95,13 @@ func (cp *ControlPacket) Length() []byte {
 	return encodedLength
 }
 
-func (cp *ControlPacket) decodeLength() (uint32, int) {
+func decodeLength(data []byte) (uint32, int) {
 	multiplier := 1
 	index := 0
 	var length uint32
 
 	for {
-		encodedByte := cp.data[index]
+		encodedByte := data[index]
 		length += uint32(encodedByte&byte(messageLengthMask)) * uint32(multiplier)
 		if encodedByte&messageLengthMax == 0 {
 			break

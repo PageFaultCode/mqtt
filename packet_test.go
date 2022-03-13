@@ -70,31 +70,31 @@ func (m *PacketTest) TestLength() {
 func (m *PacketTest) TestDecodeLength() {
 	message1 := ControlPacket{data: []byte{singleByteLength}}
 
-	length, bytesUsed := message1.decodeLength()
+	length, bytesUsed := decodeLength(message1.data)
 	m.Assert().Equal(uint32(singleByteLength), length)
 	m.Assert().Equal(1, bytesUsed)
 
 	message2 := ControlPacket{data: []byte{maxByte, singleByteLength}}
 
-	length, bytesUsed = message2.decodeLength()
+	length, bytesUsed = decodeLength(message2.data)
 	m.Assert().Equal(twoByteValue, length)
 	m.Assert().Equal(2, bytesUsed)
 
 	message3 := ControlPacket{data: []byte{maxByte, maxByte, singleByteLength}}
 
-	length, bytesUsed = message3.decodeLength()
+	length, bytesUsed = decodeLength(message3.data)
 	m.Assert().Equal(threeByteValue, length)
 	m.Assert().Equal(3, bytesUsed)
 
 	message4 := ControlPacket{data: []byte{maxByte, maxByte, maxByte, singleByteLength}}
 
-	length, bytesUsed = message4.decodeLength()
+	length, bytesUsed = decodeLength(message4.data)
 	m.Assert().Equal(fourByteValue, length)
 	m.Assert().Equal(4, bytesUsed)
 
 	messageError := ControlPacket{data: []byte{maxByte, maxByte, maxByte, maxByte, singleByteLength}}
 
-	length, bytesUsed = messageError.decodeLength()
+	length, bytesUsed = decodeLength(messageError.data)
 	m.Assert().Equal(errorValue, length)
 	m.Assert().Equal(0, bytesUsed)
 }
